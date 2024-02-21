@@ -57,7 +57,7 @@ int main (int argc, char* argv[]) {
     //decide mode
     string junk;
     char mode;
-    cin >> junk >> mode;
+    cin >> mode;
     bool rand = false;
 
     switch (mode) {
@@ -68,10 +68,12 @@ int main (int argc, char* argv[]) {
         rand = true;
         break;
         default:
-        cerr << "invalid mode\n";
+        cerr << "invalid mode " << mode << endl;
         return 1;
         break;
     }
+
+    cout << "checkpoint 3: mode " << mode << " selected.\n";
 
     Mine mmap = Mine(cin, verbose, statistics, median); //M MODE ONLY, R NEEDS IMPLEMENTATION
     if (rand) {
@@ -93,9 +95,14 @@ int main (int argc, char* argv[]) {
         mmap = Mine();
     } */
 
+    cout << "checkpoint 4: map contructed, about to enter while loop\n";
+    uint32_t round = 0;
+
     //start processing
     while (!mmap.lost()) {
+        cout << "round: " << round++;
         uint8_t q = mmap.investigate();
+        cout << ", investigation complete.\n";
         switch(q) {
             case (1):
                 cout << "Cleared " << mmap.numTiles << " tiles containing " << mmap.numRubble << " rubble and escaped.\n";

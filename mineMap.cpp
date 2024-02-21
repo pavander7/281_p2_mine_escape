@@ -5,6 +5,7 @@
 using namespace std;
 
 Mine::Mine (std::istream &in, bool v_in, bool s_in, bool m_in) : v(v_in), s(s_in), m(m_in) {
+    cout << "checkpoint 3.1: entered constructor\n";
     numTiles = 0;
     numRubble = 0;
     string junk;
@@ -12,6 +13,8 @@ Mine::Mine (std::istream &in, bool v_in, bool s_in, bool m_in) : v(v_in), s(s_in
     in >> junk >> this->size >> junk >> junk >> sRow >> sCol;
     this->spawn->row = sRow;
     this->spawn->col = sCol;
+
+    cout << "checkpoint 3.2: prelim vals entered\n";
     int temp;
     for (uint16_t r = 0; r < this->size; r++) {
         for (uint16_t c = 0; c < this->size; c++) {
@@ -23,6 +26,8 @@ Mine::Mine (std::istream &in, bool v_in, bool s_in, bool m_in) : v(v_in), s(s_in
             }
         } in >> junk;
     }
+
+    cout << "checkpoint 3.3: map filled\n";
     discover(spawn);
 }
 
