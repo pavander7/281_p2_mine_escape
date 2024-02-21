@@ -14,34 +14,37 @@ Mine::Mine (std::istream &in, bool v_in, bool s_in, bool m_in) : v(v_in), s(s_in
     uint16_t sCol = 0;
     Tile temp2 = {0,0,0};
     spawn = &temp2;
-    spawn->col = 0;
-    spawn->row = 0;
-    spawn->rubble = 0;
 
-    in >> junk >> this->size >> junk >> junk >> sRow >> sCol;
+    in >> junk >> this->size >> junk >> sRow >> sCol;
     this->spawn->row = sRow;
     this->spawn->col = sCol;
     grid.reserve(size);
     clearGrid.reserve(size);
-
+    cout << junk << " " << this->size << " " << sRow << " " << sCol << endl;
     cout << "checkpoint 3.2: prelim vals entered\n";
     int temp = 0;
     for (uint16_t r = 0; r < this->size; r++) {
-        cout << "r: " << r << ", ";
+        cout << "[";
+        grid[r].reserve(size);
+        clearGrid[r].reserve(size);
+        vector<Tile*> line;
+        vector<bool> clearLine;
         for (uint16_t c = 0; c < this->size; c++) {
-            cout << "c: " << c << ", ";
             in >> temp;
-            cout << "val: " << temp << " ";
-            cout << this->grid[r][c]->rubble;
-            assert(false);
-            this->grid[r][c]->rubble = temp;
-            cout << "2 ";
-            this->clearGrid[r][c] = false;
-            cout << "3 ";
+            cout << temp << " ";
+            if (temp < 100) cout << " ";
+            if (temp < 10) cout << " ";
+            Tile* here = new Tile();
+            *here = {r, c, temp};
+            this->clearGrid[r].push_back(false);
+            this->grid[r].push_back(here);
             if (r == sRow && c == sCol) {
                 spawn->rubble = temp;
             }
-        } in >> junk;
+        }
+        cout << "] " << r << "\n";
+        grid.push_back(line);
+        clearGrid.push_back(clearLine);
     }
 
     cout << "checkpoint 3.3: map filled\n";
