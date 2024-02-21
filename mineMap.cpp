@@ -12,6 +12,10 @@ Mine::Mine (std::istream &in, bool v_in, bool s_in, bool m_in) : v(v_in), s(s_in
     string junk;
     uint16_t sRow = 0;
     uint16_t sCol = 0;
+    spawn->col = 0;
+    spawn->row = 0;
+    spawn->rubble = 0;
+
     in >> junk >> this->size >> junk >> junk >> sRow >> sCol;
     this->spawn->row = sRow;
     this->spawn->col = sCol;
