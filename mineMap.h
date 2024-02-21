@@ -20,7 +20,7 @@ public:
 class Mine {
 public: 
     Mine(); // default constructor
-    Mine(std::istream &in); // M-mode constructor
+    Mine(std::istream &in, bool v_in, bool s_in, bool m_in); // M-mode constructor
 
     bool checkTNT (Tile* place);
     int checkRubble (Tile* place);
@@ -42,4 +42,5 @@ private:
     uint16_t size;
     Tile* spawn;
     std::priority_queue<Tile*, std::vector<Tile*>, tileComp> pq;
+    bool v, s, m;
 };

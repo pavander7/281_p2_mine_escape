@@ -4,7 +4,7 @@
 
 using namespace std;
 
-Mine::Mine (std::istream &in) {
+Mine::Mine (std::istream &in, bool v_in, bool s_in, bool m_in) : v(v_in), s(s_in), m(m_in) {
     numTiles = 0;
     numRubble = 0;
     string junk;
@@ -68,7 +68,7 @@ uint8_t Mine::investigate() {
 
         Tile* temp = pq.top();
         if (temp->rubble > 0) {
-            cout << "Cleared: " << temp->rubble << " at [" << temp->row << "," << temp->col << "]/n";
+            if (v) cout << "Cleared: " << temp->rubble << " at [" << temp->row << "," << temp->col << "]/n";
             numRubble+= uint32_t(temp->rubble);
             numTiles++;
         }

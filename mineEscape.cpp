@@ -73,7 +73,19 @@ int main (int argc, char* argv[]) {
         break;
     }
 
-    Mine mmap = Mine(cin); //M MODE ONLY, R NEEDS IMPLEMENTATION
+    Mine mmap = Mine(cin, verbose, statistics, median); //M MODE ONLY, R NEEDS IMPLEMENTATION
+    if (rand) {
+        cerr << "pseudorandom input not yet implemented\n";
+        return 1;
+    }
+
+    if (statistics) {
+        cerr << "statistics mode not yet implemented, #" << N << " selected as N\n";
+    }
+
+    if (median) {
+        cerr << "median mode not yet implemented\n";
+    }
     /* //cin the rest of the parameters according to mode
     if (!rand) {
         mmap = Mine(cin);
