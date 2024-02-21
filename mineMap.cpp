@@ -12,6 +12,8 @@ Mine::Mine (std::istream &in, bool v_in, bool s_in, bool m_in) : v(v_in), s(s_in
     string junk;
     uint16_t sRow = 0;
     uint16_t sCol = 0;
+    Tile temp2 = {0,0,0};
+    spawn = &temp2;
     spawn->col = 0;
     spawn->row = 0;
     spawn->rubble = 0;
