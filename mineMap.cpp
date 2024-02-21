@@ -25,10 +25,10 @@ Mine::Mine (std::istream &in, bool v_in, bool s_in, bool m_in) : v(v_in), s(s_in
     int temp = 0;
     for (uint16_t r = 0; r < this->size; r++) {
         cout << "[";
-        grid[r].reserve(size);
-        clearGrid[r].reserve(size);
         vector<Tile*> line;
         vector<bool> clearLine;
+        line.reserve(size);
+        clearLine.reserve(size);
         for (uint16_t c = 0; c < this->size; c++) {
             in >> temp;
             cout << temp << " ";
