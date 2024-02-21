@@ -13,6 +13,8 @@ Mine::Mine (std::istream &in, bool v_in, bool s_in, bool m_in) : v(v_in), s(s_in
     in >> junk >> this->size >> junk >> junk >> sRow >> sCol;
     this->spawn->row = sRow;
     this->spawn->col = sCol;
+    grid.reserve(size);
+    clearGrid.reserve(size);
 
     cout << "checkpoint 3.2: prelim vals entered\n";
     int temp = 0;
@@ -22,6 +24,8 @@ Mine::Mine (std::istream &in, bool v_in, bool s_in, bool m_in) : v(v_in), s(s_in
             cout << "c: " << c << ", ";
             in >> temp;
             cout << "val: " << temp << " ";
+            cout << this->grid[r][c]->rubble;
+            assert(false);
             this->grid[r][c]->rubble = temp;
             cout << "2 ";
             this->clearGrid[r][c] = false;
