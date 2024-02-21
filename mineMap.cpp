@@ -1,6 +1,7 @@
 // Project Identifier: 19034C8F3B1196BF8E0C6E1C0F973D2FD550B88F
 
 #include "mineMap.h"
+#include <cassert>
 
 using namespace std;
 
