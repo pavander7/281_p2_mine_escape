@@ -3,3 +3,4 @@ checkpoint 2: command line processed
 checkpoint 3: mode M selected.
 checkpoint 3.1: entered constructor
 checkpoint 3.2: prelim vals entered
+r: 0, c: 0, 

@@ -15,12 +15,17 @@ Mine::Mine (std::istream &in, bool v_in, bool s_in, bool m_in) : v(v_in), s(s_in
     this->spawn->col = sCol;
 
     cout << "checkpoint 3.2: prelim vals entered\n";
-    int temp;
+    int temp = 0;
     for (uint16_t r = 0; r < this->size; r++) {
+        cout << "r: " << r << ", ";
         for (uint16_t c = 0; c < this->size; c++) {
+            cout << "c: " << c << ", ";
             in >> temp;
+            cout << "val: " << temp << " ";
             this->grid[r][c]->rubble = temp;
+            cout << "2 ";
             this->clearGrid[r][c] = false;
+            cout << "3 ";
             if (r == sRow && c == sCol) {
                 spawn->rubble = temp;
             }
