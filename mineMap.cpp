@@ -36,8 +36,8 @@ Mine::Mine (std::istream &in, bool v_in, bool s_in, bool m_in) : v(v_in), s(s_in
             if (temp < 10) cout << " ";
             Tile* here = new Tile();
             *here = {r, c, temp};
-            this->clearGrid[r].push_back(false);
-            this->grid[r].push_back(here);
+            clearLine.push_back(false);
+            line.push_back(here);
             if (r == sRow && c == sCol) {
                 spawn->rubble = temp;
             }
