@@ -46,6 +46,7 @@ public:
     void explode(Tile* place);
 
     void statsOut();
+    void manualClear();
 
     uint32_t numTiles, numRubble;
 

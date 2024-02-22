@@ -108,7 +108,9 @@ int main (int argc, char* argv[]) {
                 cout << "Cleared " << mmap.numTiles << " tiles containing " << mmap.numRubble << " rubble and escaped.\n";
                 if (statistics) {
                     mmap.statsOut();
+                    
                 } 
+                mmap.manualClear();
                 return 0;
                 break;
             case (2):
@@ -120,5 +122,4 @@ int main (int argc, char* argv[]) {
                 break;
         }
     }
-
 }
