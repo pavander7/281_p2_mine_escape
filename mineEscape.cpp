@@ -13,7 +13,7 @@ int main (int argc, char* argv[]) {
     //getoptlong time
     ios_base::sync_with_stdio(false);
 
-    cout << "checkpoint 1: beginning \n";
+    //cout << "checkpoint 1: beginning \n";
 
     static struct option long_options[] = {
     {"help",        no_argument,        NULL,  'h'},
@@ -52,7 +52,7 @@ int main (int argc, char* argv[]) {
         c = getopt_long(argc, argv, "hvms:", long_options, &option_index);
     }
 
-    cout << "checkpoint 2: command line processed\n";
+    //cout << "checkpoint 2: command line processed\n";
 
     //decide mode
     string junk;
@@ -73,7 +73,7 @@ int main (int argc, char* argv[]) {
         break;
     }
 
-    cout << "checkpoint 3: mode " << mode << " selected.\n";
+    //cout << "checkpoint 3: mode " << mode << " selected.\n";
 
     Mine mmap = Mine(cin, verbose, statistics, median); //M MODE ONLY, R NEEDS IMPLEMENTATION
     if (rand) {
@@ -95,14 +95,14 @@ int main (int argc, char* argv[]) {
         mmap = Mine();
     } */
 
-    cout << "checkpoint 4: map contructed, about to enter while loop\n";
-    uint32_t round = 0;
+    //cout << "checkpoint 4: map constructed, about to enter while loop\n";
+    //uint32_t round = 0;
 
     //start processing
     while (!mmap.lost()) {
-        cout << "round: " << round++;
+        //cout << "round: " << ++round << endl;
         uint8_t q = mmap.investigate();
-        cout << ", investigation complete.\n";
+        //cout << "investigation " << round << " complete.\n";
         switch(q) {
             case (1):
                 cout << "Cleared " << mmap.numTiles << " tiles containing " << mmap.numRubble << " rubble and escaped.\n";
