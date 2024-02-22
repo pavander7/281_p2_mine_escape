@@ -5,7 +5,7 @@
 
 using namespace std;
 
-Mine::Mine (std::istream &in, bool v_in, bool s_in, bool m_in) : v(v_in), s(s_in), m(m_in) {
+Mine::Mine (std::istream &in, bool v_in, bool s_in, bool m_in, uint32_t N_in) : v(v_in), s(s_in), m(m_in), N(N_in) {
     //cout << "checkpoint 3.1: entered constructor\n";
     numTiles = 0;
     numRubble = 0;
@@ -20,6 +20,7 @@ Mine::Mine (std::istream &in, bool v_in, bool s_in, bool m_in) : v(v_in), s(s_in
     this->spawn->col = sCol;
     grid.reserve(size);
     clearGrid.reserve(size);
+
     //cout << junk << " " << this->size << " " << sRow << " " << sCol << endl;
     //cout << "checkpoint 3.2: prelim vals entered\n";
     int temp = 0;
@@ -72,6 +73,18 @@ bool tileComp::operator() (const Tile* a, const Tile* b) const {
     } else return a->rubble > b->rubble;
 }
 
+bool easyComp::operator() (const Tile a, const Tile b) const {
+    if (a.rubble == b.rubble) {
+        return true;
+    } else return a.rubble < b.rubble;
+}
+
+bool hardComp::operator() (const Tile a, const Tile b) const {
+    if (a.rubble == b.rubble) {
+        return false;
+    } else return a.rubble > b.rubble;
+}
+
 uint8_t Mine::investigate() {
     if (pq.top() == nullptr) {
         pq.pop();
@@ -82,11 +95,41 @@ uint8_t Mine::investigate() {
         uint16_t c = pq.top()->col;
         uint8_t result = 0;
         // can assume non-edge (edge tile should trigger win condition)
-        /*
-        if (r == 0 || c == 0) {
-            cout << "BACKEDGE\n";
-        } */
-
+        
+        pq.pop();
+        if (s) {
+            if (firstCleared.size() < N) {
+                firstCleared.push_back(*temp);
+                lastCleared.push_front(*temp);
+            } else {
+                if (lastCleared.size () < N) {
+                    lastCleared.push_front(*temp);
+                } else if (lastCleared.size() == N) {
+                    lastCleared.pop_back();
+                    lastCleared.push_front(*temp);
+                } else {
+                    cerr << "stats err\n";
+                    assert(false);
+                }
+            }
+            if (easiest.size() < N) {
+                easiest.push_back(*temp);
+                if (easy < temp->rubble) easy = temp->rubble;
+            } else if ((easiest.size() == N) && (temp->rubble < easy)) {
+                stable_sort(easiest.begin(), easiest.end(), easyComp());
+                easiest.pop_back();
+                easiest.push_back(*temp);
+            }
+            if (hardest.size() < N) {
+                hardest.push_back(*temp);
+                if (hard > temp->rubble) hard = temp->rubble;
+            } else if ((hardest.size() == N) && (temp->rubble > hard)) {
+                stable_sort(hardest.begin(), hardest.end(), hardComp());
+                hardest.pop_back();
+                hardest.push_back(*temp);
+            } 
+        } 
+        
         if (temp->rubble > 0) {
             if (v) cout << "Cleared: " << temp->rubble << " at [" << temp->row << "," << temp->col << "]\n";
             numRubble+= uint32_t(temp->rubble);
@@ -97,8 +140,7 @@ uint8_t Mine::investigate() {
             cout << "caught: (" << r << ", " << c << ")\n";
             assert(false);
         }
-        clearGrid[r][c] = true;
-        pq.pop();
+        
         delete temp;
 
         /*if (r == size - 1 || c == size - 1 || r == 0 || c == 0) {
@@ -126,8 +168,10 @@ uint8_t Mine::investigate() {
 }
 
 void Mine::discover(Tile* place) {
-    //cout << "discovered: (" << place->row << ", " << place->col << ") rubble: " << place->rubble << endl;
+    //cout << "discovered: (" << place->row << ", " << place->col << ") rubble: " 
+    //     << place->rubble << " @" << place << endl;
     pq.push(place);
+    clearGrid[place->row][place->col] = true;
 }
 
 void Mine::explode(Tile* place) {
@@ -138,6 +182,8 @@ void Mine::explode(Tile* place) {
     TNTq.push(grid[r][c]);
 
     while (!TNTq.empty()) {
+        cerr << "\nTNTland\n";
+        assert(false);
         if (TNTq.top()->rubble == -1) {
             size_t r2 = TNTq.top()->row;
             size_t c2 = TNTq.top()->col;
@@ -166,4 +212,33 @@ void Mine::explode(Tile* place) {
 
 bool Mine::lost() {
     return pq.empty();
+}
+
+void Mine::statsOut() {
+    cout << "First tiles cleared:\n";
+    for(uint16_t n = 0; n < min(N,uint32_t(firstCleared.size())); n++) {
+        Tile* f = &firstCleared[n];
+        if (f->rubble == -1) cout << "TNT";
+        else cout << f->rubble;
+        cout << " at [" << f->row << "," << f->col << "]\n";
+    }
+    cout << "Last tiles cleared:\n";
+    for(uint16_t n = 0; n < min(N,uint32_t(lastCleared.size())); n++) {
+        Tile* l = &lastCleared[n];
+        if (l->rubble == -1) cout << "TNT";
+        else cout << l->rubble;
+        cout << " at [" << l->row << "," << l->col << "]\n";
+    }
+    cout << "Easiest tiles cleared:\n";
+    stable_sort(easiest.begin(), easiest.end(), easyComp());
+    for(uint16_t n = 0; n < min(N,uint32_t(easiest.size())); n++) {
+        Tile* e = &easiest[n];
+        cout << e->rubble << " at [" << e->row << "," << e->col << "]\n";
+    }
+    cout << "Hardest tiles cleared:\n";
+    stable_sort(hardest.begin(), hardest.end(), hardComp());
+    for(uint16_t n = 0; n < min(N,uint32_t(hardest.size())); n++) {
+        Tile* h = &hardest[n];
+        cout << h->rubble << " at [" << h->row << "," << h->col << "]\n";
+    }
 }

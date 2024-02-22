@@ -75,14 +75,14 @@ int main (int argc, char* argv[]) {
 
     //cout << "checkpoint 3: mode " << mode << " selected.\n";
 
-    Mine mmap = Mine(cin, verbose, statistics, median); //M MODE ONLY, R NEEDS IMPLEMENTATION
+    Mine mmap = Mine(cin, verbose, statistics, median, N); //M MODE ONLY, R NEEDS IMPLEMENTATION
     if (rand) {
         cerr << "pseudorandom input not yet implemented\n";
         return 1;
     }
 
     if (statistics) {
-        cerr << "statistics mode not yet implemented, #" << N << " selected as N\n";
+        //cerr << "statistics mode not yet implemented, #" << N << " selected as N\n";
     }
 
     if (median) {
@@ -106,6 +106,9 @@ int main (int argc, char* argv[]) {
         switch(q) {
             case (1):
                 cout << "Cleared " << mmap.numTiles << " tiles containing " << mmap.numRubble << " rubble and escaped.\n";
+                if (statistics) {
+                    mmap.statsOut();
+                } 
                 return 0;
                 break;
             case (2):
@@ -117,16 +120,5 @@ int main (int argc, char* argv[]) {
                 break;
         }
     }
-
-    //while loop processing
-        //check win condition
-
-        //investigate
-
-        //fix invariants
-        
-        //pop
-    
-    //endgame procedure
 
 }
