@@ -152,19 +152,17 @@ uint8_t Mine::investigate() {
                 easiest.push_back(*temp);
                 if (easy < temp->rubble) easy = temp->rubble;
             } else if ((easiest.size() == N) && (temp->rubble <= easy)) {
-                sort(easiest.begin(), easiest.end(), easyComp());
                 easy = easiest.back().rubble;
                 easiest.pop_back();
-                easiest.push_back(*temp);
+                sort_insert(easiest, *temp, true);
             }
             if (hardest.size() < N) {
                 hardest.push_back(*temp);
                 if (hard > temp->rubble) hard = temp->rubble;
             } else if ((hardest.size() == N) && (temp->rubble >= hard)) {
-                sort(hardest.begin(), hardest.end(), hardComp());
                 hard = hardest.back().rubble;
                 hardest.pop_back();
-                hardest.push_back(*temp);
+                sort_insert(easiest, *temp, true);
             } 
         } 
 
@@ -295,19 +293,17 @@ void Mine::explode(Tile* place) {
                     easiest.push_back(*temp);
                     if (easy < temp->rubble) easy = temp->rubble;
                 } else if ((easiest.size() == N) && (temp->rubble <= easy)) {
-                    sort(easiest.begin(), easiest.end(), easyComp());
                     easy = easiest.back().rubble;
                     easiest.pop_back();
-                    easiest.push_back(*temp);
+                    sort_insert(easiest, *temp, true);
                 }
                 if (hardest.size() < N) {
                     hardest.push_back(*temp);
                     if (hard > temp->rubble) hard = temp->rubble;
                 } else if ((hardest.size() == N) && (temp->rubble >= hard)) {
-                    sort(hardest.begin(), hardest.end(), hardComp());
                     hard = hardest.back().rubble;
                     hardest.pop_back();
-                    hardest.push_back(*temp);
+                    sort_insert(easiest, *temp, false);
                 } 
             } 
             TNTq.pop();
@@ -339,13 +335,13 @@ void Mine::statsOut() {
         cout << " at [" << l->row << "," << l->col << "]\n";
     }
     cout << "Easiest tiles cleared:\n";
-    sort(easiest.begin(), easiest.end(), easyComp());
+    //sort(easiest.begin(), easiest.end(), easyComp());
     for(uint16_t n = 0; n < min(N,uint32_t(easiest.size())); n++) {
         Tile* e = &easiest[n];
         cout << e->rubble << " at [" << e->row << "," << e->col << "]\n";
     }
     cout << "Hardest tiles cleared:\n";
-    sort(hardest.begin(), hardest.end(), hardComp());
+    //sort(hardest.begin(), hardest.end(), hardComp());
     for(uint16_t n = 0; n < min(N,uint32_t(hardest.size())); n++) {
         Tile* h = &hardest[n];
         cout << h->rubble << " at [" << h->row << "," << h->col << "]\n";
@@ -377,6 +373,43 @@ void sort_insert(deque<int> &book, int elt) {
         while (!side.empty()) {
             book.push_back(side.back());
             side.pop_back();
+        }
+    }
+    /*cout << "book: ";
+    for (size_t q = 0; q < book.size(); q++) {
+        cout << book[q] << " ";
+    } cout << endl;*/
+}
+
+void sort_insert(vector<Tile> &book, Tile elt, bool easy) {
+    deque<Tile> side;
+    if(book.empty()) {
+        book.push_back(elt);
+        //cout << "book: " << elt << endl;
+        return;
+    } else {
+        if (easy) {
+            easyComp cmp;
+            while (cmp(book.back(),elt)) {
+                if (book.empty()) break;
+                side.push_back(book.back());
+                book.pop_back();
+            } book.push_back(elt);
+            while (!side.empty()) {
+                book.push_back(side.back());
+                side.pop_back();
+            }
+        } else {
+            hardComp cmp;
+            while (cmp(book.back(),elt)) {
+                if (book.empty()) break;
+                side.push_back(book.back());
+                book.pop_back();
+            } book.push_back(elt);
+            while (!side.empty()) {
+                book.push_back(side.back());
+                side.pop_back();
+            }
         }
     }
     /*cout << "book: ";

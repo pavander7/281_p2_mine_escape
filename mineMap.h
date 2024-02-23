@@ -66,3 +66,4 @@ private:
 };
 
 void sort_insert(std::deque<int> &book, int elt);
+void sort_insert(std::vector<Tile> &book, Tile elt, bool easy);
