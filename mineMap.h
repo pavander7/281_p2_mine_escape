@@ -53,7 +53,7 @@ public:
 private:
     std::vector<std::vector<Tile*> > grid;
     std::vector<std::vector<bool> > clearGrid, tntGrid;
-    std::uint16_t size;
+    std::uint32_t size;
     Tile* spawn;
     std::priority_queue<Tile*, std::vector<Tile*>, tileComp> pq;
     bool v, s, m;

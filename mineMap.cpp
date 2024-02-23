@@ -151,9 +151,8 @@ uint8_t Mine::investigate() {
             assert(false);
         }
 
-        cout << clearGrid[r+1][c] << endl;
         //delete temp;
-        if ((r < size && c < size) && (r != 0 && c != 0)) {
+        if ((r < (size - uint32_t(1)) && c < (size - uint32_t(1))) && (r != 0 && c != 0)) {
             //cout << "surround: [" << r << "," << c << "]\n";
             if(!clearGrid[r+1][c]) discover(grid[r+1][c]);
             if(!clearGrid[r-1][c]) discover(grid[r-1][c]);
@@ -183,8 +182,8 @@ void Mine::discover(Tile* place) {
 
 void Mine::explode(Tile* place) {
     priority_queue<Tile*, vector<Tile*>, tileComp> TNTq;
-    size_t r = place->row;
-    size_t c = place->col;
+    uint32_t r = place->row;
+    uint32_t c = place->col;
 
     TNTq.push(grid[r][c]);
     tntGrid[r][c] = true;
@@ -398,11 +397,12 @@ void Mine::stats(Tile* elt) {
             assert(false);
         }
     }
+    easyComp cmp;
     if (easiest.size() == 0) {
         easiest.push_back(*elt);
     } else if (easiest.size() < N) {
         sort_insert(easiest, *elt, true);
-    } else if (easiest.size() == N) {
+    } else if (easiest.size() == N && cmp(*elt,easiest.back())) {
         easiest.pop_back();
         sort_insert(easiest, *elt, true);
     }
@@ -410,7 +410,7 @@ void Mine::stats(Tile* elt) {
         hardest.push_back(*elt);
     } else if (hardest.size() < N) {
         sort_insert(hardest, *elt, false);
-    } else if (hardest.size() == N) {
+    } else if (hardest.size() == N && cmp(easiest.back(),*elt)) {
         hardest.pop_back();
         sort_insert(hardest, *elt, false);
     } return;
