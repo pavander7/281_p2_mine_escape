@@ -152,7 +152,7 @@ uint8_t Mine::investigate() {
                 easiest.push_back(*temp);
                 if (easy < temp->rubble) easy = temp->rubble;
             } else if ((easiest.size() == N) && (temp->rubble <= easy)) {
-                std::stable_sort(easiest.begin(), easiest.end(), easyComp());
+                stable_sort(easiest.begin(), easiest.end(), easyComp());
                 easy = easiest.back().rubble;
                 easiest.pop_back();
                 easiest.push_back(*temp);
@@ -161,7 +161,7 @@ uint8_t Mine::investigate() {
                 hardest.push_back(*temp);
                 if (hard > temp->rubble) hard = temp->rubble;
             } else if ((hardest.size() == N) && (temp->rubble >= hard)) {
-                std::stable_sort(hardest.begin(), hardest.end(), hardComp());
+                stable_sort(hardest.begin(), hardest.end(), hardComp());
                 hard = hardest.back().rubble;
                 hardest.pop_back();
                 hardest.push_back(*temp);
@@ -295,7 +295,7 @@ void Mine::explode(Tile* place) {
                     easiest.push_back(*temp);
                     if (easy < temp->rubble) easy = temp->rubble;
                 } else if ((easiest.size() == N) && (temp->rubble <= easy)) {
-                    std::stable_sort(easiest.begin(), easiest.end(), easyComp());
+                    stable_sort(easiest.begin(), easiest.end(), easyComp());
                     easy = easiest.back().rubble;
                     easiest.pop_back();
                     easiest.push_back(*temp);
@@ -304,7 +304,7 @@ void Mine::explode(Tile* place) {
                     hardest.push_back(*temp);
                     if (hard > temp->rubble) hard = temp->rubble;
                 } else if ((hardest.size() == N) && (temp->rubble >= hard)) {
-                    std::stable_sort(hardest.begin(), hardest.end(), hardComp());
+                    stable_sort(hardest.begin(), hardest.end(), hardComp());
                     hard = hardest.back().rubble;
                     hardest.pop_back();
                     hardest.push_back(*temp);
@@ -339,13 +339,13 @@ void Mine::statsOut() {
         cout << " at [" << l->row << "," << l->col << "]\n";
     }
     cout << "Easiest tiles cleared:\n";
-    std::stable_sort(easiest.begin(), easiest.end(), easyComp());
+    stable_sort(easiest.begin(), easiest.end(), easyComp());
     for(uint16_t n = 0; n < min(N,uint32_t(easiest.size())); n++) {
         Tile* e = &easiest[n];
         cout << e->rubble << " at [" << e->row << "," << e->col << "]\n";
     }
     cout << "Hardest tiles cleared:\n";
-    std::stable_sort(hardest.begin(), hardest.end(), hardComp());
+    stable_sort(hardest.begin(), hardest.end(), hardComp());
     for(uint16_t n = 0; n < min(N,uint32_t(hardest.size())); n++) {
         Tile* h = &hardest[n];
         cout << h->rubble << " at [" << h->row << "," << h->col << "]\n";
@@ -379,7 +379,6 @@ void sort_insert(deque<int> &book, int elt) {
             side.pop_back();
         }
     }
-    assert(false);
     /*cout << "book: ";
     for (size_t q = 0; q < book.size(); q++) {
         cout << book[q] << " ";
