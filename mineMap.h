@@ -58,11 +58,11 @@ private:
     std::priority_queue<Tile*, std::vector<Tile*>, tileComp> pq;
     bool v, s, m;
     std::uint32_t N;
-    int easy, hard;
     std::deque<Tile> firstCleared, lastCleared;
     std::vector<Tile> easiest;
     std::vector<Tile> hardest;
     std::deque<int> medVec;
+    void stats(Tile* elt);
 };
 
 void sort_insert(std::deque<int> &book, int elt);

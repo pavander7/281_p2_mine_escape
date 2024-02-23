@@ -130,41 +130,12 @@ uint8_t Mine::investigate() {
         uint8_t result = 0;
         // can assume non-edge (edge tile should trigger win condition)
         
-        cout << "investigate: [" << r << "," << c << "] r:" << temp->rubble << endl;
+        //cout << "investigate: [" << r << "," << c << "] r:" << temp->rubble << endl;
 
         pq.pop();
-        if (s && temp->rubble > 0) {
-            if (firstCleared.size() < N) {
-                firstCleared.push_back(*temp);
-                lastCleared.push_front(*temp);
-            } else {
-                if (lastCleared.size () < N) {
-                    lastCleared.push_front(*temp);
-                } else if (lastCleared.size() == N) {
-                    lastCleared.pop_back();
-                    lastCleared.push_front(*temp);
-                } else {
-                    cerr << "stats err\n";
-                    assert(false);
-                }
-            }
-            if (easiest.size() < N) {
-                easiest.push_back(*temp);
-                if (easy < temp->rubble) easy = temp->rubble;
-            } else if ((easiest.size() == N) && (temp->rubble <= easy)) {
-                easy = easiest.back().rubble;
-                easiest.pop_back();
-                sort_insert(easiest, *temp, true);
-            }
-            if (hardest.size() < N) {
-                hardest.push_back(*temp);
-                if (hard > temp->rubble) hard = temp->rubble;
-            } else if ((hardest.size() == N) && (temp->rubble >= hard)) {
-                hard = hardest.back().rubble;
-                hardest.pop_back();
-                sort_insert(easiest, *temp, true);
-            } 
-        } 
+        if (s) {
+            stats(temp);
+        }
 
         if (temp->rubble > 0) {
             if (v) cout << "Cleared: " << temp->rubble << " at [" << temp->row << "," << temp->col << "]\n";
@@ -217,16 +188,16 @@ void Mine::explode(Tile* place) {
 
     TNTq.push(grid[r][c]);
     tntGrid[r][c] = true;
-    int round = 0;
+    //int round = 0;
 
     while (!TNTq.empty()) {
-        cout << "round: " << round++;
+        //cout << "round: " << round++;
         //cerr << "TNTland\n";
         
         r = TNTq.top()->row;
         c = TNTq.top()->col;
         Tile* temp = TNTq.top();
-        cout << " [" << r << "," << c << "]: " << temp->rubble << endl;
+        //cout << " [" << r << "," << c << "]: " << temp->rubble << endl;
 
         if (TNTq.top()->rubble == -1) {
             //cout << "boom\n";
@@ -262,8 +233,12 @@ void Mine::explode(Tile* place) {
                     tntGrid[r][c-1] = true;
                     //cout << "tntfind l [" << r << "," << c-1 << "]\n";
                 } 
-            }
+            } 
             if (v) cout << "TNT explosion at [" << temp->row << "," << temp->col << "]!\n";
+            if (s) {
+                stats(temp);
+            }
+
             temp->rubble = 0;
             //delete temp;
         } else {
@@ -274,37 +249,8 @@ void Mine::explode(Tile* place) {
                 if (m) {
                     medOut(temp->rubble);                   
                 } 
-            } if (s && temp->rubble > 0) {
-                if (firstCleared.size() < N) {
-                    firstCleared.push_back(*temp);
-                    lastCleared.push_front(*temp);
-                } else {
-                    if (lastCleared.size () < N) {
-                        lastCleared.push_front(*temp);
-                    } else if (lastCleared.size() == N) {
-                        lastCleared.pop_back();
-                        lastCleared.push_front(*temp);
-                    } else {
-                        cerr << "stats err\n";
-                        assert(false);
-                    }
-                }
-                if (easiest.size() < N) {
-                    easiest.push_back(*temp);
-                    if (easy < temp->rubble) easy = temp->rubble;
-                } else if ((easiest.size() == N) && (temp->rubble <= easy)) {
-                    easy = easiest.back().rubble;
-                    easiest.pop_back();
-                    sort_insert(easiest, *temp, true);
-                }
-                if (hardest.size() < N) {
-                    hardest.push_back(*temp);
-                    if (hard > temp->rubble) hard = temp->rubble;
-                } else if ((hardest.size() == N) && (temp->rubble >= hard)) {
-                    hard = hardest.back().rubble;
-                    hardest.pop_back();
-                    sort_insert(easiest, *temp, false);
-                } 
+            } if (s) {
+                stats(temp);
             } 
             TNTq.pop();
             //cout << "x";
@@ -338,13 +284,17 @@ void Mine::statsOut() {
     //sort(easiest.begin(), easiest.end(), easyComp());
     for(uint16_t n = 0; n < min(N,uint32_t(easiest.size())); n++) {
         Tile* e = &easiest[n];
-        cout << e->rubble << " at [" << e->row << "," << e->col << "]\n";
+        if (e->rubble == -1) cout << "TNT";
+        else cout << e->rubble;
+        cout << " at [" << e->row << "," << e->col << "]\n";
     }
     cout << "Hardest tiles cleared:\n";
     //sort(hardest.begin(), hardest.end(), hardComp());
     for(uint16_t n = 0; n < min(N,uint32_t(hardest.size())); n++) {
         Tile* h = &hardest[n];
-        cout << h->rubble << " at [" << h->row << "," << h->col << "]\n";
+        if (h->rubble == -1) cout << "TNT";
+        else cout << h->rubble;
+        cout << " at [" << h->row << "," << h->col << "]\n";
     }
 }
 
@@ -365,10 +315,11 @@ void sort_insert(deque<int> &book, int elt) {
         //cout << "book: " << elt << endl;
         return;
     } else {
-        while (book.back() < elt) {
-            if (book.empty()) break;
-            side.push_back(book.back());
-            book.pop_back();
+        while (!book.empty()) {
+            if (book.back() < elt) {
+                side.push_back(book.back());
+                book.pop_back();
+            } else break;
         } book.push_back(elt);
         while (!side.empty()) {
             book.push_back(side.back());
@@ -390,10 +341,11 @@ void sort_insert(vector<Tile> &book, Tile elt, bool easy) {
     } else {
         if (easy) {
             easyComp cmp;
-            while (cmp(book.back(),elt)) {
-                if (book.empty()) break;
-                side.push_back(book.back());
-                book.pop_back();
+            while (!book.empty()) {
+                if (!cmp(book.back(),elt)) {
+                    side.push_back(book.back());
+                    book.pop_back();
+                } else break;
             } book.push_back(elt);
             while (!side.empty()) {
                 book.push_back(side.back());
@@ -401,10 +353,11 @@ void sort_insert(vector<Tile> &book, Tile elt, bool easy) {
             }
         } else {
             hardComp cmp;
-            while (cmp(book.back(),elt)) {
-                if (book.empty()) break;
-                side.push_back(book.back());
-                book.pop_back();
+            while (!book.empty()) {
+                if (!cmp(book.back(),elt)) {
+                    side.push_back(book.back());
+                    book.pop_back();
+                } else break;
             } book.push_back(elt);
             while (!side.empty()) {
                 book.push_back(side.back());
@@ -429,4 +382,38 @@ void Mine::medOut (int elt) {
         cout << float(medVec[(medVec.size()-size_t(1))/size_t(2)]);
     }
     cout << endl;
+}
+
+void Mine::stats(Tile* elt) {
+    if (elt->rubble == 0) return;
+    if (firstCleared.size() < N) {
+        firstCleared.push_back(*elt);
+        lastCleared.push_front(*elt);
+    } else {
+        if (lastCleared.size () < N) {
+            lastCleared.push_front(*elt);
+        } else if (lastCleared.size() == N) {
+            lastCleared.pop_back();
+            lastCleared.push_front(*elt);
+        } else {
+            cerr << "stats err\n";
+            assert(false);
+        }
+    }
+    if (easiest.size() == 0) {
+        easiest.push_back(*elt);
+    } else if (easiest.size() < N) {
+        sort_insert(easiest, *elt, true);
+    } else if (easiest.size() == N) {
+        easiest.pop_back();
+        sort_insert(easiest, *elt, true);
+    }
+    if (hardest.size() == 0) {
+        hardest.push_back(*elt);
+    } else if (hardest.size() < N) {
+        sort_insert(hardest, *elt, false);
+    } else if (hardest.size() == N) {
+        hardest.pop_back();
+        sort_insert(hardest, *elt, false);
+    } return;
 }
