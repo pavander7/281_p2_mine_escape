@@ -151,8 +151,8 @@ uint8_t Mine::investigate() {
             assert(false);
         }
 
+        cout << clearGrid[r+1][c] << endl;
         //delete temp;
-
         if ((r < size && c < size) && (r != 0 && c != 0)) {
             //cout << "surround: [" << r << "," << c << "]\n";
             if(!clearGrid[r+1][c]) discover(grid[r+1][c]);
@@ -281,7 +281,6 @@ void Mine::statsOut() {
         cout << " at [" << l->row << "," << l->col << "]\n";
     }
     cout << "Easiest tiles cleared:\n";
-    //sort(easiest.begin(), easiest.end(), easyComp());
     for(uint16_t n = 0; n < min(N,uint32_t(easiest.size())); n++) {
         Tile* e = &easiest[n];
         if (e->rubble == -1) cout << "TNT";
@@ -289,7 +288,6 @@ void Mine::statsOut() {
         cout << " at [" << e->row << "," << e->col << "]\n";
     }
     cout << "Hardest tiles cleared:\n";
-    //sort(hardest.begin(), hardest.end(), hardComp());
     for(uint16_t n = 0; n < min(N,uint32_t(hardest.size())); n++) {
         Tile* h = &hardest[n];
         if (h->rubble == -1) cout << "TNT";

@@ -1,7 +1,9 @@
 Cleared: 6 at [1,2]
 Median difficulty of clearing rubble is: 6.00
+0
 Cleared: 1 at [2,2]
 Median difficulty of clearing rubble is: 3.50
+0
 TNT explosion at [3,2]!
 TNT explosion at [3,3]!
 Cleared by TNT: 7 at [4,3]
