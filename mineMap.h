@@ -29,8 +29,7 @@ public:
 
 class Mine {
 public: 
-    Mine(); // default constructor
-    Mine(std::istream &in, bool v_in, bool s_in, bool m_in, uint32_t N); // M-mode constructor
+    Mine( bool v_in, bool s_in, bool m_in, uint32_t N); // M-mode constructor
 
     bool checkTNT (Tile* place);
     int checkRubble (Tile* place);
@@ -52,7 +51,7 @@ public:
 
 private:
     std::vector<std::vector<Tile*> > grid;
-    std::vector<std::vector<bool> > clearGrid;
+    std::vector<std::vector<bool> > clearGrid, tntGrid;
     std::uint16_t size;
     Tile* spawn;
     std::priority_queue<Tile*, std::vector<Tile*>, tileComp> pq;
@@ -62,4 +61,7 @@ private:
     std::deque<Tile> firstCleared, lastCleared;
     std::vector<Tile> easiest;
     std::vector<Tile> hardest;
+    std::deque<int> medVec;
 };
+
+void sort_insert(std::deque<int> &book, int elt);

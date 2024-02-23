@@ -5,8 +5,10 @@
 
 using namespace std;
 
-Mine::Mine (std::istream &in, bool v_in, bool s_in, bool m_in, uint32_t N_in) : v(v_in), s(s_in), m(m_in), N(N_in) {
-    //cout << "checkpoint 3.1: entered constructor\n";
+Mine::Mine (bool v_in, bool s_in, bool m_in, uint32_t N_in) : v(v_in), s(s_in), m(m_in), N(N_in) {
+    char mode;
+    cin >> mode;
+
     numTiles = 0;
     numRubble = 0;
     string junk;
@@ -15,19 +17,34 @@ Mine::Mine (std::istream &in, bool v_in, bool s_in, bool m_in, uint32_t N_in) : 
     Tile temp2 = {0,0,0};
     spawn = &temp2;
 
-    in >> junk >> this->size >> junk >> sRow >> sCol;
+    cin >> junk >> this->size >> junk >> sRow >> sCol;
     this->spawn->row = sRow;
     this->spawn->col = sCol;
     grid.reserve(size);
     clearGrid.reserve(size);
 
-    //cout << junk << " " << this->size << " " << sRow << " " << sCol << endl;
-    //cout << "checkpoint 3.2: prelim vals entered\n";
+    stringstream ss;
+    uint32_t seed = 0;
+    uint32_t max_rubble = 0;
+    uint32_t tnt = 0;
+    switch (mode) {
+        case 'M':
+            //nothing to do here lol
+            break;
+        case 'R':
+            cin >> junk >> seed >> junk >> max_rubble >> junk >> tnt;
+            P2random::PR_init(ss, size, seed, max_rubble, tnt);
+            break;
+    }
+
+    istream &in = (mode == 'M') ? cin : ss;
+
     int temp = 0;
     for (uint16_t r = 0; r < this->size; r++) {
         //cout << "[";
         vector<Tile*> line;
         vector<bool> clearLine;
+        vector<bool> tntLine;
         line.reserve(size);
         clearLine.reserve(size);
         for (uint16_t c = 0; c < this->size; c++) {
@@ -38,15 +55,14 @@ Mine::Mine (std::istream &in, bool v_in, bool s_in, bool m_in, uint32_t N_in) : 
             Tile* here = new Tile();
             *here = {r, c, temp};
             clearLine.push_back(false);
+            tntLine.push_back(false);
             line.push_back(here);
         }
         //cout << "] " << r << "\n";
         grid.push_back(line);
         clearGrid.push_back(clearLine);
     } spawn = grid[sRow][sCol];
-    //cout << spawn->row << " " << spawn->col << endl;
-
-    //cout << "checkpoint 3.3: map filled\n";
+    
     discover(spawn);
 }
 
@@ -96,8 +112,8 @@ uint8_t Mine::investigate() {
         cerr << "falsepop\n";
     } else if (pq.top()->rubble == -1) {
         Tile* temp = pq.top();
-        explode(temp);
         pq.pop();
+        explode(temp);
         //delete temp;
     } else {
         Tile* temp = pq.top();
@@ -106,7 +122,7 @@ uint8_t Mine::investigate() {
         uint8_t result = 0;
         // can assume non-edge (edge tile should trigger win condition)
         
-        cout << "investigate: [" << r << "," << c << "] r:" << temp->rubble << endl;
+        //cout << "investigate: [" << r << "," << c << "] r:" << temp->rubble << endl;
 
         pq.pop();
         if (s && temp->rubble > 0) {
@@ -143,18 +159,26 @@ uint8_t Mine::investigate() {
                 hardest.push_back(*temp);
             } 
         } 
-        
+
         if (temp->rubble > 0) {
             if (v) cout << "Cleared: " << temp->rubble << " at [" << temp->row << "," << temp->col << "]\n";
             numRubble+= uint32_t(temp->rubble);
             numTiles++;
+            if (m) {
+                sort_insert(medVec, temp->rubble);
+                cout << "Median difficulty of clearing rubble is: ";
+                if (medVec.size()%2 == 0) {
+                    cout << size_t(medVec[medVec.size()/size_t(2)] + medVec[(medVec.size()/size_t(2))+size_t(1)])/size_t(2);
+                } else cout << medVec[(medVec.size()+1)/size_t(2)];
+                cout << endl;
+            }
         } //else cout << "discard: [" << r << "," << c << "]\n";
         temp->rubble = 0;
         if (r >= size || c >= size) {
             cout << "caught: (" << r << ", " << c << ")\n";
             assert(false);
         }
-        
+
         //delete temp;
 
         if ((r < size && c < size) && (r != 0 && c != 0)) {
@@ -165,7 +189,7 @@ uint8_t Mine::investigate() {
             if(!clearGrid[r][c-1]) discover(grid[r][c-1]);
         } else {
             result = 1;
-            cout << "won at [" << r << "," << c << "]\n";
+            //cout << "won at [" << r << "," << c << "]\n";
         }
 
         return result;
@@ -180,8 +204,7 @@ uint8_t Mine::investigate() {
 }
 
 void Mine::discover(Tile* place) {
-    //cout << "discovered: (" << place->row << ", " << place->col << ") rubble: " 
-    //     << place->rubble << " @" << place << endl;
+    //cout << "discovered: (" << place->row << ", " << place->col << ") rubble: " << place->rubble << endl;
     pq.push(place);
     clearGrid[place->row][place->col] = true;
 }
@@ -192,38 +215,51 @@ void Mine::explode(Tile* place) {
     size_t c = place->col;
 
     TNTq.push(grid[r][c]);
-    int round = 0;
+    tntGrid[r][c] = true;
+    //int round = 0;
 
     while (!TNTq.empty()) {
-        cout << "round: " << round++;
+        //cout << "round: " << round++;
         //cerr << "TNTland\n";
         //assert(false);
         r = TNTq.top()->row;
         c = TNTq.top()->col;
         Tile* temp = TNTq.top();
-        cout << " [" << r << "," << c << "]: " << temp->rubble << endl;
+        //cout << " [" << r << "," << c << "]: " << temp->rubble << endl;
         if (TNTq.top()->rubble == -1) {
             //cout << "boom\n";
-            if(!clearGrid[r+1][c]) {
-                TNTq.push(grid[r+1][c]);
-                clearGrid[r+1][c] = true;
-                //cout << "tntfind d [" << r+1 << "," << c << "]\n";
-            } if(!clearGrid[r-1][c]) {
-                TNTq.push(grid[r-1][c]);
-                clearGrid[r-1][c] = true;
-                //cout << "tntfind u [" << r-1 << "," << c << "]\n";
-            } if(!clearGrid[r][c+1]) {
-                TNTq.push(grid[r][c+1]);
-                clearGrid[r][c+1] = true;
-                //cout << "tntfind r [" << r << "," << c+1 << "]\n";
-            } if(!clearGrid[r][c-1]) { 
-                TNTq.push(grid[r][c-1]);
-                clearGrid[r][c-1] = true;
-                //cout << "tntfind l [" << r << "," << c-1 << "]\n";
-            } 
-            if (v) cout << "TNT explosion at [" << temp->row << "," << temp->col << "]!\n";
             clearGrid[r][c] = true;
             TNTq.pop();
+            if (r < size) { 
+                if(!tntGrid[r+1][c] && grid[r+1][c]->rubble != 0) {
+                    TNTq.push(grid[r+1][c]);
+                    clearGrid[r+1][c] = true;
+                    tntGrid[r+1][c] = true;
+                    //cout << "tntfind d [" << r+1 << "," << c << "]\n";
+                } 
+            } if (r != 0) { 
+                if(!tntGrid[r-1][c] && grid[r-1][c]->rubble != 0) {
+                    TNTq.push(grid[r-1][c]);
+                    clearGrid[r-1][c] = true;
+                    tntGrid[r-1][c] = true;
+                    //cout << "tntfind u [" << r-1 << "," << c << "]\n";
+                } 
+            } if (c < size) { 
+                if(!tntGrid[r][c+1] && grid[r][c+1]->rubble != 0) {
+                    TNTq.push(grid[r][c+1]);
+                    clearGrid[r][c+1] = true;
+                    tntGrid[r][c+1] = true;
+                    //cout << "tntfind r [" << r << "," << c+1 << "]\n";
+                }
+            } if (c != 0) { 
+                if(!tntGrid[r][c-1] && grid[r][c-1]->rubble != 0) { 
+                    TNTq.push(grid[r][c-1]);
+                    clearGrid[r][c-1] = true;
+                    tntGrid[r][c-1] = true;
+                    //cout << "tntfind l [" << r << "," << c-1 << "]\n";
+                } 
+            }
+            if (v) cout << "TNT explosion at [" << temp->row << "," << temp->col << "]!\n";
             temp->rubble = 0;
             //delete temp;
         } else {
@@ -231,6 +267,14 @@ void Mine::explode(Tile* place) {
             if (temp->rubble > 0) {
                 numRubble+= uint32_t(temp->rubble);
                 numTiles++;
+                if (m) {
+                    sort_insert(medVec, temp->rubble);
+                    cout << "Median difficulty of clearing rubble is: ";
+                    if (medVec.size()%2 == 0) {
+                        cout << size_t(medVec[medVec.size()/size_t(2)] + medVec[(medVec.size()/size_t(2))+size_t(1)])/size_t(2);
+                    } else cout << medVec[(medVec.size()+1)/size_t(2)];
+                    cout << endl;
+                }
             } if (s && temp->rubble > 0) {
                 if (firstCleared.size() < N) {
                     firstCleared.push_back(*temp);
@@ -314,5 +358,17 @@ void Mine::manualClear() {
                 delete grid[r][c];
             } else cout << "falsepop\n";
         }
+    }
+}
+
+void sort_insert(deque<int> &book, int elt) {
+    deque<int> side;
+    while (book.back() < elt) {
+        side.push_back(book.back());
+        book.pop_back();
+    } book.push_back(elt);
+    while (!side.empty()) {
+        book.push_back(side.back());
+        side.pop_back();
     }
 }

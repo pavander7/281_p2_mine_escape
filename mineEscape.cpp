@@ -12,6 +12,7 @@ using namespace std;
 int main (int argc, char* argv[]) {
     //getoptlong time
     ios_base::sync_with_stdio(false);
+    //cout << std::fixed << std::setprecision(2);
 
     //cout << "checkpoint 1: beginning \n";
 
@@ -59,7 +60,6 @@ int main (int argc, char* argv[]) {
     char mode;
     cin >> mode;
     bool rand = false;
-
     switch (mode) {
         case 'M':
         rand = false;
@@ -75,15 +75,7 @@ int main (int argc, char* argv[]) {
 
     //cout << "checkpoint 3: mode " << mode << " selected.\n";
 
-    Mine mmap = Mine(cin, verbose, statistics, median, N); //M MODE ONLY, R NEEDS IMPLEMENTATION
-    if (rand) {
-        cerr << "pseudorandom input not yet implemented\n";
-        return 1;
-    }
-
-    if (statistics) {
-        //cerr << "statistics mode not yet implemented, #" << N << " selected as N\n";
-    }
+    Mine mmap = Mine(verbose, statistics, median, N); //M MODE ONLY, R NEEDS IMPLEMENTATION
 
     if (median) {
         cerr << "median mode not yet implemented\n";
