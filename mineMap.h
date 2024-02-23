@@ -61,7 +61,9 @@ private:
     std::deque<Tile> firstCleared, lastCleared;
     std::vector<Tile> easiest;
     std::vector<Tile> hardest;
-    std::deque<int> medVec;
+    std::priority_queue<int, std::vector<int>, std::less<int>> leftMed;
+    std::priority_queue<int, std::vector<int>, std::greater<int>> rightMed;
+    float median;
     void stats(Tile* elt);
 };
 

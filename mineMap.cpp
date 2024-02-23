@@ -86,10 +86,15 @@ int Mine::checkRubble(Tile* place) {
 }
 
 bool tileComp::operator() (const Tile* a, const Tile* b) const {
-    if (a->rubble == -1 || b->rubble == -1) {
+   if (a->rubble == -1 || b->rubble == -1) {
         if (a->rubble == b->rubble) {
-            return (a->col > b->col);
-        } else return (a->rubble > b->rubble);
+            if (a->col == b->col) {
+                return (a->row > b->row);
+            } else return (a->col > b->col);
+        } else {
+            if (a->rubble == -1) return false;
+            else return true;
+        }
     } else if (a->rubble == b->rubble) {
         if (a->col == b->col) {
             return (a->row > b->row);
@@ -114,28 +119,19 @@ bool hardComp::operator() (const Tile a, const Tile b) const {
 }
 
 uint8_t Mine::investigate() {
-    //cout << "pq size: " << pq.size() << endl;
-    if (pq.top() == nullptr) {
-        pq.pop();
-        cerr << "falsepop\n";
-    } else if (pq.top()->rubble == -1) {
-        Tile* temp = pq.top();
+    //cout << "pq top [" << pq.top()->row << "," << pq.top()->col << "]: " << pq.top()->rubble << endl;
+    Tile* temp = pq.top();
+    if (pq.top()->rubble == -1) {
         pq.pop();
         explode(temp);
         //delete temp;
     } else {
-        Tile* temp = pq.top();
         uint16_t r = pq.top()->row;
         uint16_t c = pq.top()->col;
         uint8_t result = 0;
         // can assume non-edge (edge tile should trigger win condition)
         
         //cout << "investigate: [" << r << "," << c << "] r:" << temp->rubble << endl;
-
-        pq.pop();
-        if (s) {
-            stats(temp);
-        }
 
         if (temp->rubble > 0) {
             if (v) cout << "Cleared: " << temp->rubble << " at [" << temp->row << "," << temp->col << "]\n";
@@ -151,9 +147,14 @@ uint8_t Mine::investigate() {
             assert(false);
         }
 
+        pq.pop();
+        if (s) {
+            stats(temp);
+        }
+
         //delete temp;
         if ((r < (size - uint32_t(1)) && c < (size - uint32_t(1))) && (r != 0 && c != 0)) {
-            //cout << "surround: [" << r << "," << c << "]\n";
+            //cout << "surround: [" << r << "," << c << "]: " << temp->rubble << endl;
             if(!clearGrid[r+1][c]) discover(grid[r+1][c]);
             if(!clearGrid[r-1][c]) discover(grid[r-1][c]);
             if(!clearGrid[r][c+1]) discover(grid[r][c+1]);
@@ -182,6 +183,7 @@ void Mine::discover(Tile* place) {
 
 void Mine::explode(Tile* place) {
     priority_queue<Tile*, vector<Tile*>, tileComp> TNTq;
+    priority_queue<Tile*, vector<Tile*>, tileComp> Rq;
     uint32_t r = place->row;
     uint32_t c = place->col;
 
@@ -202,33 +204,33 @@ void Mine::explode(Tile* place) {
             //cout << "boom\n";
             clearGrid[r][c] = true;
             tntGrid[r][c] = true;
-
+            
             TNTq.pop();
             if (r < size) { 
-                if(!tntGrid[r+1][c] && grid[r+1][c]->rubble != 0) {
+                if(!tntGrid[r+1][c] && !clearGrid[r+1][c] && grid[r+1][c]->rubble != 0) {
                     TNTq.push(grid[r+1][c]);
                     clearGrid[r+1][c] = true;
                     tntGrid[r+1][c] = true;
                     //cout << "tntfind d [" << r+1 << "," << c << "]\n";
                 } 
             } if (r != 0) { 
-                if(!tntGrid[r-1][c] && grid[r-1][c]->rubble != 0) {
+                if(!tntGrid[r-1][c] && !clearGrid[r-1][c] && grid[r-1][c]->rubble != 0) {
                     TNTq.push(grid[r-1][c]);
                     clearGrid[r-1][c] = true;
                     tntGrid[r-1][c] = true;
                     //cout << "tntfind u [" << r-1 << "," << c << "]\n";
                 } 
             } if (c < size) { 
-                if(!tntGrid[r][c+1] && grid[r][c+1]->rubble != 0) {
+                if(!tntGrid[r][c+1] && !clearGrid[r][c+1] && grid[r][c+1]->rubble != 0) {
                     TNTq.push(grid[r][c+1]);
                     clearGrid[r][c+1] = true;
                     tntGrid[r][c+1] = true;
                     //cout << "tntfind r [" << r << "," << c+1 << "]\n";
                 }
             } if (c != 0) { 
-                if(!tntGrid[r][c-1] && grid[r][c-1]->rubble != 0) { 
+                if(!tntGrid[r][c-1] && !clearGrid[r][c-1] && grid[r][c-1]->rubble != 0) { 
                     TNTq.push(grid[r][c-1]);
-                    clearGrid[r][c-1] = true;
+                    //clearGrid[r][c-1] = true;
                     tntGrid[r][c-1] = true;
                     //cout << "tntfind l [" << r << "," << c-1 << "]\n";
                 } 
@@ -237,21 +239,20 @@ void Mine::explode(Tile* place) {
             if (s) {
                 stats(temp);
             }
-
             temp->rubble = 0;
             //delete temp;
         } else {
             if (v) cout << "Cleared by TNT: " << temp->rubble << " at [" << temp->row << "," << temp->col << "]\n";
+            TNTq.pop();
             if (temp->rubble > 0) {
                 numRubble+= uint32_t(temp->rubble);
                 numTiles++;
                 if (m) {
                     medOut(temp->rubble);                   
-                } 
+                }
             } if (s) {
                 stats(temp);
             } 
-            TNTq.pop();
             //cout << "x";
             temp->rubble = 0;
             discover(temp);
@@ -369,16 +370,63 @@ void sort_insert(vector<Tile> &book, Tile elt, bool easy) {
 }
 
 void Mine::medOut (int elt) {
-    sort_insert(medVec, elt);
+    //sort_insert(medVec, elt);
     cout << "Median difficulty of clearing rubble is: ";
-    if (medVec.size() == 1) {
+    if (leftMed.size() == 0 && rightMed.size() == 0) {
+        leftMed.push(elt);
+        median = elt;
+    } else if (leftMed.size() == 1 && rightMed.size() == 0) {
+        rightMed.push(elt);
+        if(leftMed.top() > rightMed.top()) {
+            int leftT = leftMed.top();
+            int rightT = rightMed.top();
+            leftMed.pop();
+            rightMed.pop();
+            leftMed.push(rightT);
+            rightMed.push(leftT);
+        }
+        median = float(leftMed.top() + rightMed.top())/float(2.00);
+    } else if (leftMed.size() == 0 && rightMed.size() == 1) {
+        leftMed.push(elt);
+        if(leftMed.top() > rightMed.top()) {
+            int leftT = leftMed.top();
+            int rightT = rightMed.top();
+            leftMed.pop();
+            rightMed.pop();
+            leftMed.push(rightT);
+            rightMed.push(leftT);
+        }
+    } else {
+        if (elt < median) leftMed.push(elt);
+        else if (elt > median) rightMed.push(elt);
+        else if (leftMed.size() <= rightMed.size()) leftMed.push(elt);
+        else rightMed.push(elt);
+        if ((leftMed.size() - rightMed.size()) == 2) {
+            int temp = leftMed.top();
+            leftMed.pop();
+            rightMed.push(temp);
+            median = float(leftMed.top() + rightMed.top())/float(2.00);
+        } else if ((rightMed.size() - leftMed.size()) == 2) {
+            int temp = rightMed.top();
+            rightMed.pop();
+            leftMed.push(temp);
+            median = float(leftMed.top() + rightMed.top())/float(2.00);
+        } else if ((leftMed.size() - rightMed.size()) == 1) {
+            median = leftMed.top();
+        } else if ((rightMed.size() - leftMed.size()) == 1) {
+            median = rightMed.top();
+        } else if (leftMed.size() == rightMed.size()) {
+            median = float(leftMed.top() + rightMed.top())/float(2.00);
+        } else assert(false);
+    }
+    /*if (medVec.size() == 1) {
         cout << float(medVec[0]);
     } else if (medVec.size()%2 == 0) {
         cout << (float(medVec[size_t(medVec.size())/size_t(2)-size_t(1)]) + float(medVec[size_t(medVec.size())/size_t(2)]))/float(2);
     } else { 
         cout << float(medVec[(medVec.size()-size_t(1))/size_t(2)]);
-    }
-    cout << endl;
+    }*/
+    cout << median << endl;
 }
 
 void Mine::stats(Tile* elt) {
