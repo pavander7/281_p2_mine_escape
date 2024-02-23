@@ -8,6 +8,7 @@ using namespace std;
 Mine::Mine (bool v_in, bool s_in, bool m_in, uint32_t N_in) : v(v_in), s(s_in), m(m_in), N(N_in) {
     char mode;
     cin >> mode;
+    //cout << "mode: " << mode << endl;
 
     numTiles = 0;
     numRubble = 0;
@@ -22,7 +23,9 @@ Mine::Mine (bool v_in, bool s_in, bool m_in, uint32_t N_in) : v(v_in), s(s_in), 
     this->spawn->col = sCol;
     grid.reserve(size);
     clearGrid.reserve(size);
-
+    
+    //cout << junk << endl;
+    
     stringstream ss;
     uint32_t seed = 0;
     uint32_t max_rubble = 0;
@@ -35,11 +38,14 @@ Mine::Mine (bool v_in, bool s_in, bool m_in, uint32_t N_in) : v(v_in), s(s_in), 
             cin >> junk >> seed >> junk >> max_rubble >> junk >> tnt;
             P2random::PR_init(ss, size, seed, max_rubble, tnt);
             break;
+        default:
+            assert(false);
+            break;
     }
 
     istream &in = (mode == 'M') ? cin : ss;
 
-    int temp = 0;
+    int val = 0;
     for (uint16_t r = 0; r < this->size; r++) {
         //cout << "[";
         vector<Tile*> line;
@@ -47,13 +53,14 @@ Mine::Mine (bool v_in, bool s_in, bool m_in, uint32_t N_in) : v(v_in), s(s_in), 
         vector<bool> tntLine;
         line.reserve(size);
         clearLine.reserve(size);
+        tntLine.reserve(size);
         for (uint16_t c = 0; c < this->size; c++) {
-            in >> temp;
-            /*cout << temp << " ";
-            if (temp < 100) cout << " ";
-            if (temp < 10) cout << " "; */
+            in >> val;
+            /*cout << val << " ";
+            if (val < 100) cout << " ";
+            if (val < 10) cout << " "; */
             Tile* here = new Tile();
-            *here = {r, c, temp};
+            *here = {r, c, val};
             clearLine.push_back(false);
             tntLine.push_back(false);
             line.push_back(here);
@@ -61,6 +68,7 @@ Mine::Mine (bool v_in, bool s_in, bool m_in, uint32_t N_in) : v(v_in), s(s_in), 
         //cout << "] " << r << "\n";
         grid.push_back(line);
         clearGrid.push_back(clearLine);
+        tntGrid.push_back(tntLine);
     } spawn = grid[sRow][sCol];
     
     discover(spawn);
@@ -122,7 +130,7 @@ uint8_t Mine::investigate() {
         uint8_t result = 0;
         // can assume non-edge (edge tile should trigger win condition)
         
-        //cout << "investigate: [" << r << "," << c << "] r:" << temp->rubble << endl;
+        cout << "investigate: [" << r << "," << c << "] r:" << temp->rubble << endl;
 
         pq.pop();
         if (s && temp->rubble > 0) {
@@ -165,12 +173,7 @@ uint8_t Mine::investigate() {
             numRubble+= uint32_t(temp->rubble);
             numTiles++;
             if (m) {
-                sort_insert(medVec, temp->rubble);
-                cout << "Median difficulty of clearing rubble is: ";
-                if (medVec.size()%2 == 0) {
-                    cout << size_t(medVec[medVec.size()/size_t(2)] + medVec[(medVec.size()/size_t(2))+size_t(1)])/size_t(2);
-                } else cout << medVec[(medVec.size()+1)/size_t(2)];
-                cout << endl;
+                medOut(temp->rubble);
             }
         } //else cout << "discard: [" << r << "," << c << "]\n";
         temp->rubble = 0;
@@ -216,19 +219,22 @@ void Mine::explode(Tile* place) {
 
     TNTq.push(grid[r][c]);
     tntGrid[r][c] = true;
-    //int round = 0;
+    int round = 0;
 
     while (!TNTq.empty()) {
-        //cout << "round: " << round++;
+        cout << "round: " << round++;
         //cerr << "TNTland\n";
-        //assert(false);
+        
         r = TNTq.top()->row;
         c = TNTq.top()->col;
         Tile* temp = TNTq.top();
-        //cout << " [" << r << "," << c << "]: " << temp->rubble << endl;
+        cout << " [" << r << "," << c << "]: " << temp->rubble << endl;
+
         if (TNTq.top()->rubble == -1) {
             //cout << "boom\n";
             clearGrid[r][c] = true;
+            tntGrid[r][c] = true;
+
             TNTq.pop();
             if (r < size) { 
                 if(!tntGrid[r+1][c] && grid[r+1][c]->rubble != 0) {
@@ -268,13 +274,8 @@ void Mine::explode(Tile* place) {
                 numRubble+= uint32_t(temp->rubble);
                 numTiles++;
                 if (m) {
-                    sort_insert(medVec, temp->rubble);
-                    cout << "Median difficulty of clearing rubble is: ";
-                    if (medVec.size()%2 == 0) {
-                        cout << size_t(medVec[medVec.size()/size_t(2)] + medVec[(medVec.size()/size_t(2))+size_t(1)])/size_t(2);
-                    } else cout << medVec[(medVec.size()+1)/size_t(2)];
-                    cout << endl;
-                }
+                    medOut(temp->rubble);                   
+                } 
             } if (s && temp->rubble > 0) {
                 if (firstCleared.size() < N) {
                     firstCleared.push_back(*temp);
@@ -363,12 +364,37 @@ void Mine::manualClear() {
 
 void sort_insert(deque<int> &book, int elt) {
     deque<int> side;
-    while (book.back() < elt) {
-        side.push_back(book.back());
-        book.pop_back();
-    } book.push_back(elt);
-    while (!side.empty()) {
-        book.push_back(side.back());
-        side.pop_back();
+    if(book.empty()) {
+        book.push_back(elt);
+        //cout << "book: " << elt << endl;
+        return;
+    } else {
+        while (book.back() < elt) {
+            if (book.empty()) break;
+            side.push_back(book.back());
+            book.pop_back();
+        } book.push_back(elt);
+        while (!side.empty()) {
+            book.push_back(side.back());
+            side.pop_back();
+        }
     }
+    assert(false);
+    /*cout << "book: ";
+    for (size_t q = 0; q < book.size(); q++) {
+        cout << book[q] << " ";
+    } cout << endl;*/
+}
+
+void Mine::medOut (int elt) {
+    sort_insert(medVec, elt);
+    cout << "Median difficulty of clearing rubble is: ";
+    if (medVec.size() == 1) {
+        cout << float(medVec[0]);
+    } else if (medVec.size()%2 == 0) {
+        cout << (float(medVec[size_t(medVec.size())/size_t(2)-size_t(1)]) + float(medVec[size_t(medVec.size())/size_t(2)]))/float(2);
+    } else { 
+        cout << float(medVec[(medVec.size()-size_t(1))/size_t(2)]);
+    }
+    cout << endl;
 }

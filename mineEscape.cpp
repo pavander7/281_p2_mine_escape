@@ -5,6 +5,7 @@
 #include <deque>
 #include <getopt.h>
 #include <iostream>
+#include <iomanip>
 #include "mineMap.h"
 
 using namespace std;
@@ -12,7 +13,7 @@ using namespace std;
 int main (int argc, char* argv[]) {
     //getoptlong time
     ios_base::sync_with_stdio(false);
-    //cout << std::fixed << std::setprecision(2);
+    cout << std::fixed << std::setprecision(2);
 
     //cout << "checkpoint 1: beginning \n";
 
@@ -55,30 +56,12 @@ int main (int argc, char* argv[]) {
 
     //cout << "checkpoint 2: command line processed\n";
 
-    //decide mode
-    string junk;
-    char mode;
-    cin >> mode;
-    bool rand = false;
-    switch (mode) {
-        case 'M':
-        rand = false;
-        break;
-        case 'R':
-        rand = true;
-        break;
-        default:
-        cerr << "invalid mode " << mode << endl;
-        return 1;
-        break;
-    }
-
     //cout << "checkpoint 3: mode " << mode << " selected.\n";
 
     Mine mmap = Mine(verbose, statistics, median, N); //M MODE ONLY, R NEEDS IMPLEMENTATION
 
     if (median) {
-        cerr << "median mode not yet implemented\n";
+        //cerr << "median mode not yet implemented\n";
     }
     /* //cin the rest of the parameters according to mode
     if (!rand) {

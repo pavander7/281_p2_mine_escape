@@ -1,0 +1,6 @@
+round: 0 [3,3]: -1
+round: 1 [2,3]: -1
+round: 2 [2,4]: -1
+round: 3 [4,3]: 1
+Median difficulty of clearing rubble is: 1.00
+round: 4 [3,2]: 2
