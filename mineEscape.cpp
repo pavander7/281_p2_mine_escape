@@ -76,22 +76,20 @@ int main (int argc, char* argv[]) {
     //start processing
     while (!mmap.lost()) {
         //cout << "round: " << ++round << endl;
-        uint8_t q = mmap.investigate();
+        bool q = mmap.investigate();
         //cout << "investigation " << round << " complete.\n";
         switch(q) {
-            case (1):
+            case (true):
                 cout << "Cleared " << mmap.numTiles << " tiles containing " << mmap.numRubble << " rubble and escaped.\n";
                 if (statistics) {
                     mmap.statsOut();
                     
                 } 
-                mmap.manualClear();
                 return 0;
                 break;
-            case (2):
-                cout << "there is no escape.\n";
+            case (false):
                 cerr << "run failed (empty pq)\n";
-                return 2;
+                return 1;
                 break;
             default:
                 break;
