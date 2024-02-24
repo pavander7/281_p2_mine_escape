@@ -22,7 +22,9 @@ Mine::Mine (bool v_in, bool s_in, bool m_in, uint32_t N_in) : v(v_in), s(s_in), 
     this->spawn->row = sRow;
     this->spawn->col = sCol;
     grid.reserve(size);
+    findGrid.reserve(size);
     clearGrid.reserve(size);
+    tntGrid.reserve(size);
     
     //cout << junk << endl;
     
@@ -46,14 +48,12 @@ Mine::Mine (bool v_in, bool s_in, bool m_in, uint32_t N_in) : v(v_in), s(s_in), 
     istream &in = (mode == 'M') ? cin : ss;
 
     int val = 0;
+    vector<bool> boolLine;
+    boolLine.reserve(size);
     for (uint16_t r = 0; r < this->size; r++) {
         //cout << "[";
         vector<Tile*> line;
-        vector<bool> clearLine;
-        vector<bool> tntLine;
         line.reserve(size);
-        clearLine.reserve(size);
-        tntLine.reserve(size);
         for (uint16_t c = 0; c < this->size; c++) {
             in >> val;
             /*cout << val << " ";
@@ -61,16 +61,17 @@ Mine::Mine (bool v_in, bool s_in, bool m_in, uint32_t N_in) : v(v_in), s(s_in), 
             if (val < 10) cout << " "; */
             Tile* here = new Tile();
             *here = {r, c, val};
-            clearLine.push_back(false);
-            tntLine.push_back(false);
             line.push_back(here);
         }
+        boolLine.push_back(false);
         //cout << "] " << r << "\n";
         grid.push_back(line);
-        clearGrid.push_back(clearLine);
-        tntGrid.push_back(tntLine);
     } spawn = grid[sRow][sCol];
-    
+    for (uint16_t z = 0; z < this->size; z++) {
+        findGrid.push_back(boolLine);
+        clearGrid.push_back(boolLine);
+        tntGrid.push_back(boolLine);
+    }
     discover(spawn);
 }
 
@@ -120,20 +121,28 @@ bool hardComp::operator() (const Tile a, const Tile b) const {
 
 uint8_t Mine::investigate() {
     //cout << "pq top [" << pq.top()->row << "," << pq.top()->col << "]: " << pq.top()->rubble << endl;
+    uint8_t result = 0;
     Tile* temp = pq.top();
-    if (pq.top()->rubble == -1) {
+    //findGrid[temp->row][temp->col] = true;
+    if (tntGrid[temp->row][temp->col]) {
         pq.pop();
-        explode(temp);
+        //cout << "discard: [" << temp->row << "," << temp->col << "]: " << temp->rubble << endl;
+    } else if (temp->rubble == -1) {
+        pq.pop();
+        if (!tntGrid[temp->row][temp->col]) explode(temp);
         //delete temp;
     } else {
-        uint16_t r = pq.top()->row;
-        uint16_t c = pq.top()->col;
-        uint8_t result = 0;
+        uint16_t r = temp->row;
+        uint16_t c = temp->col;
+        
         // can assume non-edge (edge tile should trigger win condition)
         
         //cout << "investigate: [" << r << "," << c << "] r:" << temp->rubble << endl;
+        pq.pop();
+        clearGrid[temp->row][temp->col] = true;
+        tntGrid[temp->row][temp->col] = true;
 
-        if (temp->rubble > 0) {
+        if (temp->rubble != 0) {
             if (v) cout << "Cleared: " << temp->rubble << " at [" << temp->row << "," << temp->col << "]\n";
             numRubble+= uint32_t(temp->rubble);
             numTiles++;
@@ -141,13 +150,13 @@ uint8_t Mine::investigate() {
                 medOut(temp->rubble);
             }
         } //else cout << "discard: [" << r << "," << c << "]\n";
-        temp->rubble = 0;
         if (r >= size || c >= size) {
             cout << "caught: (" << r << ", " << c << ")\n";
             assert(false);
         }
 
-        pq.pop();
+        temp->rubble = 0;
+        
         if (s) {
             stats(temp);
         }
@@ -155,30 +164,23 @@ uint8_t Mine::investigate() {
         //delete temp;
         if ((r < (size - uint32_t(1)) && c < (size - uint32_t(1))) && (r != 0 && c != 0)) {
             //cout << "surround: [" << r << "," << c << "]: " << temp->rubble << endl;
-            if(!clearGrid[r+1][c]) discover(grid[r+1][c]);
-            if(!clearGrid[r-1][c]) discover(grid[r-1][c]);
-            if(!clearGrid[r][c+1]) discover(grid[r][c+1]);
-            if(!clearGrid[r][c-1]) discover(grid[r][c-1]);
+            if(!findGrid[r+1][c]) discover(grid[r+1][c]);
+            if(!findGrid[r-1][c]) discover(grid[r-1][c]);
+            if(!findGrid[r][c+1]) discover(grid[r][c+1]);
+            if(!findGrid[r][c-1]) discover(grid[r][c-1]);
         } else {
             result = 1;
             //cout << "won at [" << r << "," << c << "]\n";
         }
 
-        return result;
-    } return 0; // for compiler, shouldn't ever end up here
-    /*Check for tnt
-    if (grid[r+1][c+1]->rubble == -1) explode(place);
-    else if (grid[r+1][c-1]->rubble == -1) explode(place);
-    else if (grid[r-1][c-1]->rubble == -1) explode(place);
-    else if (grid[r-1][c+1]->rubble == -1) explode(place);
-    else {
-    } */
+    } 
+    return result; 
 }
 
 void Mine::discover(Tile* place) {
-    //cout << "discovered: (" << place->row << ", " << place->col << ") rubble: " << place->rubble << endl;
+    //cout << "discovered: [" << place->row << "," << place->col << "] rubble: " << place->rubble << endl;
     pq.push(place);
-    clearGrid[place->row][place->col] = true;
+    findGrid[place->row][place->col] = true;
 }
 
 void Mine::explode(Tile* place) {
@@ -189,9 +191,86 @@ void Mine::explode(Tile* place) {
 
     TNTq.push(grid[r][c]);
     tntGrid[r][c] = true;
+    findGrid[r][c] = true;
     //int round = 0;
 
     while (!TNTq.empty()) {
+        r = TNTq.top()->row;
+        c = TNTq.top()->col;
+        Tile* temp = TNTq.top();
+
+        findGrid[r][c] = true;
+        clearGrid[r][c] = true;
+        tntGrid[r][c] = true;
+
+        TNTq.pop();
+        temp->rubble = 0;
+
+        if (r < size) if (!tntGrid[r+1][c] && grid[r+1][c]->rubble == -1) TNTq.push(grid[r+1][c]);
+        if (r != 0) if (!tntGrid[r-1][c] && grid[r-1][c]->rubble == -1) TNTq.push(grid[r-1][c]);
+        if (c < size) if (!tntGrid[r][c+1] && grid[r][c+1]->rubble == -1) TNTq.push(grid[r][c+1]);
+        if (c != 0) if (!tntGrid[r][c-1] && grid[r][c-1]->rubble == -1) TNTq.push(grid[r][c-1]);
+
+        if (r < size) { 
+            if(!tntGrid[r+1][c] && (!clearGrid[r+1][c]) && grid[r+1][c]->rubble > 0) {
+                Rq.push(grid[r+1][c]);
+                findGrid[r+1][c] = true;
+                tntGrid[r+1][c] = true;
+                //cout << "tntfind d [" << r+1 << "," << c << "]\n";
+            } 
+        } if (r != 0) { 
+            if(!tntGrid[r-1][c] && (!clearGrid[r-1][c]) && grid[r-1][c]->rubble > 0) {
+                Rq.push(grid[r-1][c]);
+                findGrid[r-1][c] = true;
+                tntGrid[r-1][c] = true;
+                //cout << "tntfind u [" << r-1 << "," << c << "]\n";
+            } 
+        } if (c < size) { 
+            if(!tntGrid[r][c+1] && (!clearGrid[r][c+1]) && grid[r][c+1]->rubble > 0) {
+                Rq.push(grid[r][c+1]);
+                findGrid[r][c+1] = true;
+                tntGrid[r][c+1] = true; 
+                //cout << "tntfind r [" << r << "," << c+1 << "]\n";
+            }
+        } if (c != 0) { 
+            if(!tntGrid[r][c-1] && (!clearGrid[r][c-1]) && grid[r][c-1]->rubble > 0) { 
+                Rq.push(grid[r][c-1]);
+                findGrid[r][c-1] = true;
+                tntGrid[r][c-1] = true;
+                //cout << "tntfind l [" << r << "," << c-1 << "]\n";
+            } 
+        }
+
+        if (v) cout << "TNT explosion at [" << temp->row << "," << temp->col << "]!\n";
+        if (s) {
+            stats(temp);
+        }
+        
+    } //cout << "cleanup\n";
+    while (!Rq.empty()) {
+        r = Rq.top()->row;
+        c = Rq.top()->col;
+        Tile* temp = Rq.top();
+
+        if (v) cout << "Cleared by TNT: " << temp->rubble << " at [" << temp->row << "," << temp->col << "]\n";
+        if (temp->rubble > 0) {
+            numRubble+= uint32_t(temp->rubble);
+            numTiles++;
+            if (m) {
+                medOut(temp->rubble);                   
+            }
+
+        } if (s) {
+            stats(temp);
+        } 
+        Rq.pop();
+        //findGrid[temp->row][temp->col] = true;
+        temp->rubble = 0;
+        //cout << "x";
+        discover(temp);
+    }
+
+    /*while (!TNTq.empty()) {
         //cout << "round: " << round++;
         //cerr << "TNTland\n";
         
@@ -202,35 +281,35 @@ void Mine::explode(Tile* place) {
 
         if (TNTq.top()->rubble == -1) {
             //cout << "boom\n";
-            clearGrid[r][c] = true;
+            findGrid[r][c] = true;
             tntGrid[r][c] = true;
             
             TNTq.pop();
             if (r < size) { 
-                if(!tntGrid[r+1][c] && !clearGrid[r+1][c] && grid[r+1][c]->rubble != 0) {
+                if(!tntGrid[r+1][c] && !findGrid[r+1][c] && grid[r+1][c]->rubble != 0) {
                     TNTq.push(grid[r+1][c]);
-                    clearGrid[r+1][c] = true;
+                    findGrid[r+1][c] = true;
                     tntGrid[r+1][c] = true;
                     //cout << "tntfind d [" << r+1 << "," << c << "]\n";
                 } 
             } if (r != 0) { 
-                if(!tntGrid[r-1][c] && !clearGrid[r-1][c] && grid[r-1][c]->rubble != 0) {
+                if(!tntGrid[r-1][c] && !findGrid[r-1][c] && grid[r-1][c]->rubble != 0) {
                     TNTq.push(grid[r-1][c]);
-                    clearGrid[r-1][c] = true;
+                    findGrid[r-1][c] = true;
                     tntGrid[r-1][c] = true;
                     //cout << "tntfind u [" << r-1 << "," << c << "]\n";
                 } 
             } if (c < size) { 
-                if(!tntGrid[r][c+1] && !clearGrid[r][c+1] && grid[r][c+1]->rubble != 0) {
+                if(!tntGrid[r][c+1] && !findGrid[r][c+1] && grid[r][c+1]->rubble != 0) {
                     TNTq.push(grid[r][c+1]);
-                    clearGrid[r][c+1] = true;
+                    findGrid[r][c+1] = true;
                     tntGrid[r][c+1] = true;
                     //cout << "tntfind r [" << r << "," << c+1 << "]\n";
                 }
             } if (c != 0) { 
-                if(!tntGrid[r][c-1] && !clearGrid[r][c-1] && grid[r][c-1]->rubble != 0) { 
+                if(!tntGrid[r][c-1] && !findGrid[r][c-1] && grid[r][c-1]->rubble != 0) { 
                     TNTq.push(grid[r][c-1]);
-                    //clearGrid[r][c-1] = true;
+                    //findGrid[r][c-1] = true;
                     tntGrid[r][c-1] = true;
                     //cout << "tntfind l [" << r << "," << c-1 << "]\n";
                 } 
@@ -258,7 +337,7 @@ void Mine::explode(Tile* place) {
             discover(temp);
             //fix invariants here
         }
-    }
+    }*/
 }
 
 bool Mine::lost() {
